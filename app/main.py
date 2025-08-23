@@ -6,11 +6,11 @@ from fastapi import HTTPException
 import uvicorn
 
 # 1. Crea la instancia de FastMCP primero
-mcp = FastMCP(name="Insurence MCP")
+
 
 # 2. Define tu FastAPI app, pasando el lifespan de FastMCP
 app = FastAPI(title="Insurence API", lifespan=mcp.lifespan)
-
+mcp = FastMCP.from_fastapi(app=app)
 # 3. Define tus endpoints de la API de Supabase
 # Se asume que las credenciales de Supabase son correctas
 SUPABASE_URL = "https://supabase.kaiser-soft.com"
