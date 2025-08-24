@@ -15,8 +15,14 @@ from math import radians, cos, sin, sqrt, atan2
 
 # Inicializa el cliente de Supabase con tus credenciales.
 # Es una buena práctica usar variables de entorno para las claves.
-SUPABASE_URL = "https://supabase.kaiser-soft.com"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzU1ODM4ODAwLCJleHAiOjE5MTM2MDUyMDB9.QHME589F1zHAZRX23WX6sBaQZ_pKVT-M-1MEXWlRDQc"
+# Carga las variables del archivo .env
+load_dotenv()
+
+# Extrae las variables de entorno
+SUPABASE_URL: str = os.getenv("SUPABASE_URL")
+SUPABASE_KEY: str = os.getenv("SUPABASE_KEY")
+
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Crea la instancia de FastMCP.
@@ -36,34 +42,6 @@ app = FastAPI(
 # =========================================================================
 # 2. ENDPOINTS DE FASTAPI
 # =========================================================================
-
-@app.get("/")
-async def root():
-    """Endpoint principal para verificar que la API está funcionando."""
-    return {"message": "Hello from FastAPI!"}
-
-@app.get("/supabase-data")
-async def get_supabase_data():
-    """
-    Lee todos los registros de la tabla 'test' en Supabase.
-    """
-    try:
-        response = supabase.table("test").select("*").execute()
-        return response.data
-    except Exception as e:
-        # Manejo de errores para conexiones o consultas fallidas.
-        raise HTTPException(status_code=500, detail=f"Error al obtener datos de Supabase: {str(e)}")
-
-@app.post("/insert-text")
-async def insert_text(text: str):
-    """
-    Inserta un nuevo registro en la tabla 'test' de Supabase con el texto proporcionado.
-    """
-    try:
-        response = supabase.table("test").insert({"text": text}).execute()
-        return {"inserted": response.data}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al insertar en Supabase: {str(e)}")
 
 class ClientCreateRequest(BaseModel):
 	nombre: str
@@ -240,7 +218,58 @@ async def get_all_cultivos():
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"Error al obtener cultivos: {str(e)}")
 
+class SeguroCreateRequest(BaseModel):
+	cliente_id: int
+	cultivo_id: int
+	tipo_cobertura: str
+	suma_asegurada: float
+	prima: float
+	monto_pagado: float
+	fecha_pago: str
+	metodo_pago: str
+	fecha_inicio: str
+	fecha_fin: str
+	estado: str
+	parametros: Optional[str] = None
+	formula_indemnizacion: Optional[str] = None
 
+@app.post("/add-seguro")
+async def add_seguro(seguro: SeguroCreateRequest = Body(...)):
+	"""
+	Crea un nuevo seguro en la tabla 'Seguro' en Supabase.
+	"""
+	try:
+		seguro_data = seguro.model_dump()
+		# Convierte fechas a formato ISO si es necesario
+		seguro_data["fecha_pago"] = datetime.date.fromisoformat(seguro_data["fecha_pago"]).isoformat()
+		seguro_data["fecha_inicio"] = datetime.date.fromisoformat(seguro_data["fecha_inicio"]).isoformat()
+		seguro_data["fecha_fin"] = datetime.date.fromisoformat(seguro_data["fecha_fin"]).isoformat()
+		response = supabase.table("Seguro").insert(seguro_data).execute()
+		return {"inserted": response.data}
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=f"Error al crear seguro: {str(e)}")
+
+@app.get("/get-seguros-by-cliente")
+async def get_seguros_by_cliente(cliente_id: int):
+	"""
+	Obtiene todos los seguros asociados a un cliente dado su id.
+	"""
+	try:
+		response = supabase.table("Seguro").select("*").eq("cliente_id", cliente_id).execute()
+		return response.data
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=f"Error al obtener seguros: {str(e)}")
+
+@app.get("/get-seguros-by-cultivo")
+async def get_seguros_by_cultivo(cultivo_id: int):
+	"""
+	Obtiene todos los seguros asociados a un cultivo dado su id.
+	"""
+	try:
+		response = supabase.table("Seguro").select("*").eq("cultivo_id", cultivo_id).execute()
+		return response.data
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=f"Error al obtener seguros: {str(e)}")
 # =========================================================================
 # 3. ENDPOINTS DE FASTMCP (PARA LLM)
 # =========================================================================
