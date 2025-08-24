@@ -1,6 +1,6 @@
 # back-hack-ia
 
-Proyecto desarrollado para el hackathon de Colombia IA.
+Insure AI Proyecto desarrollado para el hackathon de Colombia IA 2025.
 
 ## Estructura del proyecto
 
