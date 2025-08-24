@@ -65,7 +65,10 @@ docker run -it back-hack-ia
 ```
 
 ## Autor
-Colombia-IA-Hackathon
+Brayan Medina
+Leonardo Ramirez
+Santiago Viana
+Luis Miguel
 
 ## Licencia
 Este proyecto es solo para fines educativos y de hackathon.
